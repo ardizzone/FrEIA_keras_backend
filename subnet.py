@@ -15,7 +15,7 @@ class SubnetFactory:
                 kr.layers.ReLU(),
 
                 kr.layers.Conv2D(ch_out, 3, padding='same'),
-            ])
+            ], name='subnet')
 
         return net
 
