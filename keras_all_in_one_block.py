@@ -51,7 +51,7 @@ class AllInOneBlock(kr.layers.Layer):
 
         channels = dims_in[0][-1]
         self.Ddim = len(dims_in[0]) - 1
-        self.sum_dims = tuple(range(0, 1 + self.Ddim))
+        self.sum_dims = tuple(range(1, 2 + self.Ddim))
 
         if len(dims_c) == 0:
             self.conditional = False
@@ -115,6 +115,9 @@ class AllInOneBlock(kr.layers.Layer):
         self.last_jac = None
 
     def build(self, input_shape):
+        # TODO oof... flaky... where does this come from?
+        input_shape = input_shape[0]
+
         self.s.build((None, input_shape[0], input_shape[1], self.splits[0] + self.condition_channels))
         super().build(input_shape)
 
@@ -152,7 +155,7 @@ class AllInOneBlock(kr.layers.Layer):
                     -tf.math.reduce_sum(sub_jac, axis=self.sum_dims))
 
     def call(self, x, c=[], rev=False):
-        x = [x]
+
         if rev:
             x = [self.permute(x[0], rev=True)]
         elif self.welling_perm:
