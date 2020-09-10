@@ -35,7 +35,7 @@ class ReversibleSequential(kr.models.Model):
     def call(self, x, c=None, rev=False, intermediate_outputs=False):
 
         iterator = range(len(self.blocks_list))
-        jac = tf.zeros(x.shape[0])
+        jac = None
 
         if rev:
             iterator = reversed(iterator)
@@ -47,6 +47,12 @@ class ReversibleSequential(kr.models.Model):
             else:
                 x, j = (self.blocks_list[i]([x], c=[c[self.conditions[i]]], rev=rev)[0],
                         self.blocks_list[i].jacobian([x], c=[c[self.conditions[i]]], rev=rev))
-            jac = j + jac
+
+            # i would have liked to have done it with zeros....
+            # but tensorflow, it gives me trouble...
+            if jac is None:
+                jac = j
+            else:
+                jac += j
 
         return x, jac
