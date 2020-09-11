@@ -1,14 +1,15 @@
 from collections import namedtuple
 
 import subnet
-from keras_all_in_one_block import AllInOneBlock
-from keras_reversible_sequential_net import ReversibleSequential
 
 import tensorflow.keras as kr
 import tensorflow as tf
 import torch
 import torch.nn
 import numpy as np
+
+from FrEIA.keras.framework import ReversibleSequential
+from FrEIA.keras.modules import AllInOneBlock
 
 in_shape = (32, 32, 3)
 ndims_tot = int(np.prod(in_shape))
