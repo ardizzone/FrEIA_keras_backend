@@ -3,7 +3,7 @@ Keras Backend for FrEIA
 
 Todo:
 
-* `ReversibleSequentialNet`
-* `AllInOneBlock`
+* DONE `ReversibleSequentialNet`
+* DONE `AllInOneBlock`
 * `HaarWaveletDownsampling`
 * `ReversibleGraphNet`
