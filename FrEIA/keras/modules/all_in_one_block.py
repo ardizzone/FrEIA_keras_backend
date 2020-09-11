@@ -182,8 +182,7 @@ class AllInOneBlock(kr.layers.Layer):
         n_pixels = 1
         for d in self.sum_dims[:-1]:
             n_pixels *= x_out.shape[d]
-        self.last_jac += ((-1)**rev * n_pixels) * (1 - int(self.GIN)) \
-                       * tf.reduce_sum(tf.math.log(self.global_scale_activation(self.global_scale) + 1e-12))
+        self.last_jac += ((-1)**rev * n_pixels) * (1 - int(self.GIN)) * tf.reduce_sum(tf.math.log(self.global_scale_activation(self.global_scale) + 1e-12))
 
         if not rev:
             x_out = self.permute(x_out, rev=False)
