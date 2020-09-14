@@ -1,6 +1,4 @@
-from collections import namedtuple
-
-import subnet
+from argparse import ArgumentParser
 
 import tensorflow.keras as kr
 import tensorflow as tf
@@ -9,12 +7,23 @@ import numpy as np
 from FrEIA.keras.framework import ReversibleSequential
 from FrEIA.keras.modules import AllInOneBlock
 
-in_shape = (32, 32, 3)
-ndims_tot = int(np.prod(in_shape))
-BATCH_SIZE = 32
-USE_HPDLF = True
+import subnet
 
-if USE_HPDLF:
+#tf.autograph.set_verbosity(3, True)
+
+IN_SHAPE = (32, 32, 3)
+NDIMS_TOT = int(np.prod(IN_SHAPE))
+BATCH_SIZE = 32
+
+parser = ArgumentParser()
+parser.add_argument('--hpdlf', dest='use_hpdlf', action='store_true', default=False)
+
+args = parser.parse_args()
+
+use_hpdlf = args.use_hpdlf
+print(use_hpdlf)
+
+if use_hpdlf:
     import tarantella
     tarantella.init(0)
     rank = tarantella.get_rank()
@@ -26,7 +35,7 @@ else:
 print(('RANK:      {}\n'
        'COMM_SIZE: {}').format(rank, comm_size))
 
-model = ReversibleSequential(*in_shape)
+model = ReversibleSequential(*IN_SHAPE)
 
 for k in range(5):
     kwargs = {'affine_clamping': 1.0,
@@ -42,18 +51,18 @@ def nll_loss_z_part(y, z):
     return 0.5 * zz
 
 def nll_loss_jac_part(y, jac):
-    return - tf.math.reduce_mean(jac) / ndims_tot
-
-#Sample = namedtuple('Sample', ['image', 'label'])
+    return - tf.math.reduce_mean(jac) / NDIMS_TOT
 
 def _build_dataset(raw_data, shuffle=False):
     images, labels = raw_data
-    labels = np.squeeze(labels)
-    samples = (images.astype(np.float32) / 172.5 - 1., labels.astype(np.int64))
+    labels = np.squeeze(labels).astype(np.int64)
+    images = images.astype(np.float32)
+
+    samples = (images / 172.5 - 1., (labels, labels))
     data = tf.data.Dataset.from_tensor_slices(samples)
     if shuffle:
         data = data.shuffle(1000)
-    return data.batch(BATCH_SIZE)#.make_one_shot_iterator().get_next()
+    return data.batch(BATCH_SIZE)
 
 train_data, test_data = kr.datasets.cifar10.load_data()
 train_dataset = _build_dataset(train_data, shuffle=True)
