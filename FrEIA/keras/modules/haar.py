@@ -34,15 +34,14 @@ class HaarDownsampling(kr.layers.Layer):
             raise NotImplementedError("Ordering by wavelet not implemented for FrEIA Keras backend")
 
     def call(self, x, rev=False):
-        # TODO oh oh, still the thing where x sould be a list...
-        # x = x[0]
+        x = x[0]
         if not rev:
             out = tf.nn.separable_conv2d(x, self.haar_weights, self.ident, strides=[1, 2, 2, 1], padding='VALID', data_format='NHWC')
             if self.permute:
                 # TODO (unreachable)
-                return out[:, self.perm] * self.fac_fwd
+                return [out[:, self.perm] * self.fac_fwd]
             else:
-                return out * self.fac_fwd
+                return [out * self.fac_fwd]
 
         else:
             if self.permute:
