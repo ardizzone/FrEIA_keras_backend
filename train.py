@@ -58,7 +58,10 @@ def train(args):
                                                            save_weights_only=True,
                                                            mode='min',
                                                            verbose=is_primary_node)
+        loss_log_callback = kr.callbacks.CSVLogger(os.path.join(output_dir, 'losses.dat'), separator=' ')
+
         callbacks.append(checkpoint_callback)
+        callbacks.append(loss_log_callback)
 
 
     try:

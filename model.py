@@ -11,18 +11,23 @@ BatchNormalization._USE_V2_BEHAVIOR = False
 class SubnetFactory:
     def __init__(self, ch_hidden):
         self.ch = ch_hidden
+        self.init = kr.initializers.he_normal()
+        self.regu = kr.regularizers.l2(1e-4)
 
     def __call__(self, ch_in, ch_out):
         net = kr.models.Sequential([
-                kr.layers.Conv2D(self.ch, 3, padding='same'),
+                kr.layers.Conv2D(self.ch, 3, padding='same', use_bias=False,
+                                 kernel_initializer=self.init, kernel_regularizer=self.regu),
                 BatchNormalization(),
                 kr.layers.ReLU(),
 
-                kr.layers.Conv2D(self.ch, 3, padding='same'),
+                kr.layers.Conv2D(self.ch, 3, padding='same', use_bias=False,
+                                 kernel_initializer=self.init, kernel_regularizer=self.regu),
                 BatchNormalization(),
                 kr.layers.ReLU(),
 
-                kr.layers.Conv2D(ch_out, 3, padding='same'),
+                kr.layers.Conv2D(ch_out, 3, padding='same', use_bias=True,
+                                 kernel_initializer=self.init, kernel_regularizer=self.regu),
             ], name='subnet')
 
         return net
