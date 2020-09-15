@@ -92,9 +92,9 @@ class AllInOneBlock(kr.layers.Layer):
             np.random.seed()
 
         self.w = tf.Variable(w.reshape((*([1] * self.Ddim), channels, channels)),
-                              trainable=False)
+                              trainable=False, name=self.name + '_w')
         self.w_inv = tf.Variable(w.T.reshape((*([1] * self.Ddim), channels, channels)),
-                              trainable=False)
+                              trainable=False, name=self.name + '_w_inv')
 
         if global_affine_type == 'SIGMOID':
             global_scale = np.log(global_affine_init)
@@ -108,8 +108,11 @@ class AllInOneBlock(kr.layers.Layer):
         else:
             raise ValueError('Please, SIGMOID, SOFTPLUS or EXP, as global affine type')
 
-        self.global_scale = tf.Variable(tf.ones((1, *([1] * self.Ddim), self.in_channels)) * float(global_scale))
-        self.global_offset = tf.Variable(tf.zeros((1,  *([1] * self.Ddim), self.in_channels)))
+        self.global_scale = tf.Variable(tf.ones((1, *([1] * self.Ddim), self.in_channels)) * float(global_scale),
+                                        name=self.name + '_gamma')
+
+        self.global_offset = tf.Variable(tf.zeros((1,  *([1] * self.Ddim), self.in_channels)),
+                                         name=self.name + '_beta')
 
         self.s = subnet_constructor(self.splits[0] + self.condition_channels, 2 * self.splits[1])
         self.last_jac = None
