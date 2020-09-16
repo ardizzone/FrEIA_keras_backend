@@ -31,6 +31,10 @@ def train(args):
         nodes_number = 1
     is_primary_node = (node_rank == 0)
 
+    print(f'NODE_RANK {node_rank}')
+    print(f'N_NODES {nodes_number}')
+    print(f'NODE_RANK {str(is_primary_node).upper()}', flush=True)
+
     model = build_model(args)
     data = Dataset(args)
 
@@ -58,6 +62,7 @@ def train(args):
                                                            save_weights_only=True,
                                                            mode='min',
                                                            verbose=is_primary_node)
+
         loss_log_callback = kr.callbacks.CSVLogger(os.path.join(output_dir, 'losses.dat'), separator=' ')
 
         callbacks.append(checkpoint_callback)
@@ -76,10 +81,13 @@ def train(args):
     model.compile(loss=[nll_loss_z_part, nll_loss_jac_part],
                   optimizer=optimizer)
 
-    history = model.fit(data.train_dataset,
-                        epochs  = n_epochs,
-                        verbose = is_primary_node,
-                        callbacks = [lr_scheduler_callback, checkpoint_callback],
-                        validation_data = data.test_dataset)
-
+    try:
+        history = model.fit(data.train_dataset,
+                            epochs  = n_epochs,
+                            verbose = is_primary_node,
+                            callbacks = callbacks,
+                            validation_data = data.test_dataset)
+    except:
+        raise
+    finally:
     model.save_weights(os.path.join(output_dir, 'checkpoint_end.hdf5'), overwrite=True)
