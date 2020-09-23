@@ -27,6 +27,7 @@ assert os.path.isdir(output_dir), 'Usage: ' + usage + f'\nNo such directory: "{o
 # initialize the options with the defaults, overwrite the ones specified.
 args = configparser.ConfigParser()
 args.read(os.path.join(os.getcwd(), 'default.ini'))
+#args.read('/home/diz/code/freia_keras/default.ini')
 
 if os.path.isfile(conf_file):
     args.read(conf_file)

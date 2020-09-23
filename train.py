@@ -8,11 +8,12 @@ import numpy as np
 from model import build_model
 from data import Dataset
 
+print("TENSORFLOW VERSION", tf.__version__)
+tf.autograph.set_verbosity(10)
 
 def train(args):
 
     use_tarantella   = eval(args['training']['use_tarantella'])
-    n_GPUs           = eval(args['training']['tarantella_GPUs'])
     ndims_tot        = np.prod(eval(args['data']['data_dimensions']))
     output_dir       = args['checkpoints']['output_dir']
     sched_milestones = eval(args['training']['milestones_lr_decay'])
@@ -21,9 +22,13 @@ def train(args):
     optimizer_type   = args['training']['optimizer']
     optimizer_lr     = eval(args['training']['lr'])
 
+    model = build_model(args)
+    data = Dataset(args)
+
     if use_tarantella:
         import tarantella
-        tarantella.init(n_GPUs)
+        # no argument (otherwise: ranks per node)
+        tarantella.init()
         node_rank = tarantella.get_rank()
         nodes_number = tarantella.get_size()
     else:
@@ -34,9 +39,6 @@ def train(args):
     print(f'NODE_RANK {node_rank}')
     print(f'N_NODES {nodes_number}')
     print(f'NODE_RANK {str(is_primary_node).upper()}', flush=True)
-
-    model = build_model(args)
-    data = Dataset(args)
 
     def nll_loss_z_part(y, z):
         zz = tf.math.reduce_mean(z**2)
@@ -57,15 +59,15 @@ def train(args):
     callbacks = [lr_scheduler_callback, kr.callbacks.TerminateOnNaN()]
 
     if is_primary_node:
-        checkpoint_callback = kr.callbacks.ModelCheckpoint(filepath=os.path.join(output_dir, 'checkpoint_best.hdf5'),
-                                                           save_best_only=True,
-                                                           save_weights_only=True,
-                                                           mode='min',
-                                                           verbose=is_primary_node)
+        #checkpoint_callback = kr.callbacks.ModelCheckpoint(filepath=os.path.join(output_dir, 'checkpoint_best.hdf5'),
+                                                           #save_best_only=True,
+                                                           #save_weights_only=True,
+                                                           #mode='min',
+                                                           #verbose=is_primary_node)
 
         loss_log_callback = kr.callbacks.CSVLogger(os.path.join(output_dir, 'losses.dat'), separator=' ')
 
-        callbacks.append(checkpoint_callback)
+        #callbacks.append(checkpoint_callback)
         callbacks.append(loss_log_callback)
 
 
@@ -79,7 +81,10 @@ def train(args):
     optimizer = optimizer_type(optimizer_lr, **optimizer_kwargs)
 
     model.compile(loss=[nll_loss_z_part, nll_loss_jac_part],
-                  optimizer=optimizer)
+                  optimizer=optimizer, run_eagerly=False)
+    model.build((128, 32, 32, 3))
+
+    model = tarantella.model.TarantellaModel(model)
 
     try:
         history = model.fit(data.train_dataset,
@@ -89,5 +94,4 @@ def train(args):
                             validation_data = data.test_dataset)
     except:
         raise
-    finally:
-    model.save_weights(os.path.join(output_dir, 'checkpoint_end.hdf5'), overwrite=True)
+        #model.save_weights(os.path.join(output_dir, 'checkpoint_end.hdf5'), overwrite=True)
