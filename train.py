@@ -22,9 +22,6 @@ def train(args):
     optimizer_type   = args['training']['optimizer']
     optimizer_lr     = eval(args['training']['lr'])
 
-    model = build_model(args)
-    data = Dataset(args)
-
     if use_tarantella:
         import tarantella
         # no argument (otherwise: ranks per node)
@@ -35,6 +32,12 @@ def train(args):
         node_rank = 0
         nodes_number = 1
     is_primary_node = (node_rank == 0)
+
+    args['training']['rank'] = repr(node_rank)
+    args['training']['comm_size'] = repr(nodes_number)
+
+    model = build_model(args)
+    data = Dataset(args)
 
     print(f'NODE_RANK {node_rank}')
     print(f'N_NODES {nodes_number}')
@@ -80,18 +83,20 @@ def train(args):
 
     optimizer = optimizer_type(optimizer_lr, **optimizer_kwargs)
 
+    if use_tarantella:
+        model = tarantella.Model(model)
+
     model.compile(loss=[nll_loss_z_part, nll_loss_jac_part],
                   optimizer=optimizer, run_eagerly=False)
     model.build((128, 32, 32, 3))
 
-    model = tarantella.model.TarantellaModel(model)
 
     try:
         history = model.fit(data.train_dataset,
                             epochs  = n_epochs,
                             verbose = is_primary_node,
                             callbacks = callbacks,
-                            validation_data = data.test_dataset)
+                            validation_data = (data.test_dataset if is_primary_node else None))
     except:
         raise
         #model.save_weights(os.path.join(output_dir, 'checkpoint_end.hdf5'), overwrite=True)

@@ -9,7 +9,8 @@ class Dataset:
         train_data, test_data = kr.datasets.cifar10.load_data()
 
         self.batch_size = eval(args['training']['batch_size'])
-
+        self.rank, self.comm_size = (eval(args['training']['rank']),
+                                     eval(args['training']['comm_size']))
         self.mu = eval(args['data']['mu_normalize'])
         self.std = eval(args['data']['std_normalize'])
 
@@ -17,10 +18,10 @@ class Dataset:
         self.std = np.reshape(self.std, (1, 1, 1, 3)).astype(np.float32)
 
         self.train_dataset = self._build_dataset(train_data, shuffle=True)
-        self.test_dataset  = self._build_dataset(train_data, shuffle=False, cut=512)
+        self.test_dataset  = self._build_dataset(train_data, shuffle=False, shard=False, cut=512)
 
 
-    def _build_dataset(self, raw_data, shuffle=False, cut=None):
+    def _build_dataset(self, raw_data, shuffle=False, cut=None, shard=True):
         images, labels = raw_data
         if cut:
             images = images[:cut]
@@ -38,6 +39,8 @@ class Dataset:
         data = tf.data.Dataset.from_tensor_slices(samples)
         if shuffle:
             data = data.shuffle(1000)
+        if shard:
+            data = data.shard(num_shards=self.comm_size, index=self.rank)
         return data.batch(self.batch_size)
 
 
