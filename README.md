@@ -1,9 +1,13 @@
 Keras Backend for FrEIA
 ------------------------
+Developed for the use with Tarantella
+
+https://github.com/cc-hpc-itwm/tarantella
+
 
 Todo:
 
-* DONE `ReversibleSequentialNet`
-* DONE `AllInOneBlock`
-* `HaarWaveletDownsampling`
-* `ReversibleGraphNet`
+* [x] `ReversibleSequentialNet`
+* [x] `AllInOneBlock`
+* [ ] `HaarWaveletDownsampling`
+* [ ] `ReversibleGraphNet`
